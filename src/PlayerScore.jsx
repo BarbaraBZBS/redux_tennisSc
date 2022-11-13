@@ -11,7 +11,7 @@ export function PlayerScore( { playerId, playerName } ) {
             { playerName }
             { pointsBeforeWin === null
                 ? ""
-                : `(encore ${ pointsBeforeWin } ${ pointsBeforeWin > 1 ? "points" : "point"
+                : ` - (encore ${ pointsBeforeWin } ${ pointsBeforeWin > 1 ? "points" : "point"
                 })` }
         </p>
         <p>{ ( hasAdvantage ? 'Avantage -' : '' ) + score }</p>

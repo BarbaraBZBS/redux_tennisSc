@@ -6,13 +6,16 @@ const initialState = {
     player2: 0,
     advantage: null,
     winner: null,
-    playing: true,
+    playing: false,
     history: [
 
     ],
 };
 
-export const playPause = () => ( { type: "playPause" } );
+export const setPlaying = ( playing ) => ( {
+    type: "setPlaying",
+    payload: playing
+} );
 
 export const pointScored = ( player ) => ( {
     type: "pointScored",
@@ -21,15 +24,35 @@ export const pointScored = ( player ) => ( {
 
 export const restartGame = () => ( { type: "restart" } );
 
-function reducer( state = initialState, action ) {
-    if ( action.type === "playPause" ) {
-        if ( state.winner ) {
-            return state;
-        }
-        return produce( state, ( draft ) => {
-            draft.playing = !draft.playing
-        } );
+export const autoPlay = ( store ) => {
+    const isPlaying = store.getState().playing;
+    if ( isPlaying || store.getState().winner ) {
+        return;
     }
+    store.dispatch( setPlaying( true ) )
+    playNextPoint();
+
+    function playNextPoint() {
+        if ( store.getState().playing === false ) {
+            return;
+        }
+        const time = 1000 + Math.floor( Math.random() * 2000 );
+        window.setTimeout( () => {
+            if ( store.getState().playing === false ) {
+                return;
+            }
+            const pointWinner = Math.random() > 0.6 ? "player1" : "player2";
+            store.dispatch( pointScored( pointWinner ) );
+            if ( store.getState().winner ) {
+                store.dispatch( setPlaying( false ) );
+                return;
+            }
+            playNextPoint();
+        }, time );
+    }
+};
+
+function reducer( state = initialState, action ) {
     if ( action.type === "restart" ) {
         return produce( state, ( draft ) => {
             if ( draft.winner ) {
@@ -43,7 +66,12 @@ function reducer( state = initialState, action ) {
             draft.player2 = 0;
             draft.advantage = null;
             draft.winner = null;
-            draft.playing = true;
+            draft.playing = false;
+        } );
+    }
+    if ( action.type === "setPlaying" ) {
+        return produce( state, ( draft ) => {
+            draft.playing = action.payload;
         } );
     }
     if ( action.type === "pointScored" ) {
@@ -52,9 +80,7 @@ function reducer( state = initialState, action ) {
         if ( state.winner ) {
             return state;
         }
-        if ( state.playing === false ) {
-            return state;
-        }
+
         return produce( state, ( draft ) => {
             const currentPlayerScore = draft[ player ];
             if ( currentPlayerScore <= 15 ) {
